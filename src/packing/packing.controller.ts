@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PackingService } from './packing.service';
 import { PackRequestDTO } from './dto/pack-request.dto';
@@ -12,6 +12,7 @@ export class PackingController {
 
   // POST -> processar pedidos
   @Post()
+  @HttpCode(200)
   processar(@Body() payload: PackRequestDTO): PackResponseDTO {
     return this.packingService.processarPedidos(payload);
   }
