@@ -18,6 +18,7 @@ async function bootstrap() {
     .setTitle('Packing API')
     .setDescription('API para empacotar produtos nas caixas disponíveis')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
