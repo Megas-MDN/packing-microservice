@@ -35,7 +35,7 @@ export class PackingController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth() // <<< Adiciona o campo de token no Swagger
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Rota protegida' })
   @ApiResponse({ status: 200, description: 'Acesso autorizado.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
