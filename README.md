@@ -1,98 +1,201 @@
+# 📦 L2 Code - Packing API
+
+🔗 **API Online:** [https://\_\_\_.com](https://___.com)
+
+Aplicação desenvolvida em **Node.js com NestJS** para auxiliar no processo de empacotamento de pedidos de uma loja online.  
+A API recebe pedidos com produtos e suas dimensões e retorna a distribuição otimizada em caixas de papelão disponíveis.
+
+---
+
+## 🖥️ Interface de Testes
+
+A aplicação também disponibiliza uma interface web simples na rota **root (`/`)** para facilitar os testes de pedidos e autenticação.
+
+📸 Prints de funcionamento:
+
+### Tela de pedidos
+
+![Gerenciador de Pedidos](https://i.imgur.com/t5uZAPR.gif)
+
+### Testes unitários
+
+![Testes Unitários](https://i.imgur.com/CIAGynj.png)
+
+### Testes E2E
+
+![Testes E2E](https://i.imgur.com/sa2QZ2B.png)
+
+---
+
+## 🚀 Funcionalidades
+
+- Recebe uma lista de pedidos com produtos e dimensões.
+- Determina automaticamente quais caixas usar para cada pedido.
+- Minimiza o número de caixas utilizadas.
+- Retorna quais produtos foram atribuídos a cada caixa.
+- ✅ Autenticação JWT para rotas protegidas (opcional).
+- ✅ Documentação automática com Swagger.
+- ✅ Testes unitários e de integração (Jest).
+- ✅ Suporte a execução com **Docker**.
+
+---
+
+## 📦 Caixas Disponíveis
+
+- **Caixa 1**: `30 x 40 x 80 cm`
+- **Caixa 2**: `50 x 50 x 40 cm`
+- **Caixa 3**: `50 x 80 x 60 cm`
+
+---
+
+## 📑 Exemplo de Entrada (JSON)
+
+```json
+{
+  "pedidos": [
+    {
+      "pedido_id": 1,
+      "produtos": [
+        {
+          "produto_id": "PS5",
+          "dimensoes": { "altura": 40, "largura": 10, "comprimento": 25 }
+        },
+        {
+          "produto_id": "Volante",
+          "dimensoes": { "altura": 40, "largura": 30, "comprimento": 30 }
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 📤 Exemplo de Saída
+
+```json
+{
+  "pedidos": [
+    {
+      "pedido_id": 1,
+      "caixas": [
+        {
+          "caixa_id": "Caixa 2",
+          "produtos": ["PS5", "Volante"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 📘 Documentação Swagger
+
+Acesse a documentação interativa da API em:  
+👉 [/doc](http://localhost:3001/doc)
+
+---
+
+## 🔑 Autenticação JWT
+
+A API possui rotas protegidas que requerem autenticação via **Bearer Token**.
+
+- **Login**: `POST /auth/login`
+
+  ```json
+  {
+    "email": "tester@test.com",
+    "password": "test@2025#"
+  }
+  ```
+
+- **Exemplo de resposta**:
+
+  ```json
+  {
+    "access_token": "eyJhbGciOiJIUzI1..."
+  }
+  ```
+
+- Para acessar a rota protegida:
+  ```http
+  GET /packing/secure
+  Authorization: Bearer <TOKEN>
+  ```
+
+---
+
+## 🐳 Executando com Docker
+
+### Subir os containers
+
+```bash
+npm run dc:up
+```
+
+### Derrubar os containers
+
+```bash
+npm run dc:down
+```
+
+A aplicação ficará disponível em:  
+👉 [http://localhost:3001](http://localhost:3001)
+
+---
+
+## 🧪 Testes
+
+Rodar todos os testes:
+
+```bash
+npm run test
+```
+
+Rodar testes em watch mode:
+
+```bash
+npm run test:watch
+```
+
+Cobertura de testes:
+
+```bash
+npm run test:cov
+```
+
+Testes E2E:
+
+```bash
+npm run test:e2e
+```
+
+---
+
+## 📂 Estrutura das Rotas
+
+- **POST /packing** → Processa os pedidos.
+- **GET /packing** → Lista as caixas disponíveis.
+- **GET /packing/secure** → Rota protegida com JWT.
+- **POST /auth/login** → Autenticação de usuário.
+- **GET /** → Interface de teste em HTML.
+
+---
+
+## ✅ Requisitos Atendidos
+
+- [x] API em **NestJS**
+- [x] Documentação com **Swagger**
+- [x] Execução via **Docker Compose**
+- [x] Autenticação JWT
+- [x] Testes unitários e E2E
+
+---
+
+<hr>
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+👨‍💻 Developed with ❤️ by Megas
 </p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
-```
-
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
