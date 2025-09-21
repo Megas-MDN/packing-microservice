@@ -15,7 +15,7 @@ A aplicação também disponibiliza uma interface web simples na rota **root (`/
 
 ### Tela de pedidos
 
-![Gerenciador de Pedidos](https://i.imgur.com/t5uZAPR.gif)
+![Gerenciador de Pedidos](https://i.imgur.com/6bToaek.gif)
 
 ### Testes unitários
 
