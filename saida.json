@@ -4,7 +4,7 @@
       "pedido_id": 1,
       "caixas": [
         {
-          "caixa_id": "Caixa 2",
+          "caixa_id": "Caixa 1",
           "produtos": ["PS5", "Volante"]
         }
       ]
@@ -51,11 +51,11 @@
       "caixas": [
         {
           "caixa_id": "Caixa 3",
-          "produtos": ["Monitor", "Notebook"]
+          "produtos": ["Monitor"]
         },
         {
           "caixa_id": "Caixa 1",
-          "produtos": ["Webcam", "Microfone"]
+          "produtos": ["Webcam", "Microfone", "Notebook"]
         }
       ]
     },
