@@ -45,70 +45,181 @@ export class PackingService {
 
     for (const pedido of payload.pedidos) {
       const caixasUsadas: CaixaResultDTO[] = [];
-      const produtosSobrando = [...pedido.produtos];
+      let produtosRestantes = [...pedido.produtos];
 
-      // Enquanto houver produtos para empacotar
-      while (produtosSobrando.length > 0) {
-        let caixaEscolhida: Caixa | null = null;
+      // Continua até alocar todos os produtos
+      while (produtosRestantes.length > 0) {
+        // Escolhe a caixa que consegue empacotar o MAIOR número de produtos
+        let bestBox: Caixa | null = null;
+        let bestCount = 0;
+        let bestVolume = Number.MAX_SAFE_INTEGER;
 
-        // Tenta achar a menor caixa que consiga acomodar pelo menos um produto
-        for (const c of this.caixasFakeDB.sort(
-          (a, b) => this.volume(a) - this.volume(b),
-        )) {
-          if (produtosSobrando.some((p) => this.cabeNaCaixa(c, p.dimensoes))) {
-            caixaEscolhida = c;
-            break;
+        for (const c of this.caixasFakeDB) {
+          const count = this.simulatePackCount(c, produtosRestantes);
+          if (
+            count > bestCount ||
+            (count === bestCount && this.volume(c) < bestVolume)
+          ) {
+            bestCount = count;
+            bestBox = c;
+            bestVolume = this.volume(c);
           }
         }
 
-        // Se nenhum produto couber em nenhuma caixa
-        if (!caixaEscolhida) {
-          const produto = produtosSobrando.shift()!;
-          caixasUsadas.push({
-            caixa_id: null,
-            produtos: [produto.produto_id],
-            observacao: 'Produto não cabe em nenhuma caixa disponível.',
-          });
+        // Se nenhuma caixa empacota pelo menos 1 produto consecutivo,
+        // tratamos o primeiro produto como "não coube" (ou colocamos na menor caixa que cabe individualmente)
+        if (!bestBox || bestCount === 0) {
+          const produto = produtosRestantes.shift()!;
+          // tenta encontrar caixa que comporta o produto individualmente
+          const candidate = this.caixasFakeDB.find((c) =>
+            this.cabeNaCaixa(c, produto.dimensoes),
+          );
+          if (!candidate) {
+            caixasUsadas.push({
+              caixa_id: null,
+              produtos: [produto.produto_id],
+              observacao: 'Produto não cabe em nenhuma caixa disponível.',
+            });
+          } else {
+            // cabe individualmente — colocamos na menor caixa que comporta (evita null)
+            const menor = [...this.caixasFakeDB]
+              .filter((c) => this.cabeNaCaixa(c, produto.dimensoes))
+              .sort((a, b) => this.volume(a) - this.volume(b))[0];
+            caixasUsadas.push({
+              caixa_id: menor.id,
+              produtos: [produto.produto_id],
+            });
+          }
           continue;
         }
 
-        // Agrupa produtos que cabem nesta caixa
-        const produtosNaCaixa: string[] = [];
-        const indiceParaRemover: number[] = [];
-
-        produtosSobrando.forEach((p, idx) => {
-          if (this.cabeNaCaixa(caixaEscolhida!, p.dimensoes)) {
-            produtosNaCaixa.push(p.produto_id);
-            indiceParaRemover.push(idx);
-          }
-        });
-
-        // Remove produtos que já foram colocados na caixa
-        for (let i = indiceParaRemover.length - 1; i >= 0; i--) {
-          produtosSobrando.splice(indiceParaRemover[i], 1);
-        }
-
+        // Se encontramos a melhor caixa que comporta bestCount produtos,
+        // empacotamos os primeiros bestCount produtos (mantendo ordem)
+        const produtosParaCaixa = produtosRestantes.slice(0, bestCount);
         caixasUsadas.push({
-          caixa_id: caixaEscolhida.id,
-          produtos: produtosNaCaixa,
+          caixa_id: bestBox.id,
+          produtos: produtosParaCaixa.map((p) => p.produto_id),
         });
+
+        // remove os empacotados
+        produtosRestantes = produtosRestantes.slice(bestCount);
       }
+
+      // Ordenação final das caixas: C3 > C2 > C1 > null
+      caixasUsadas.sort((a, b) => {
+        const ordem = { 'Caixa 3': 1, 'Caixa 2': 2, 'Caixa 1': 3, null: 4 };
+        return (
+          ordem[a.caixa_id as keyof typeof ordem] -
+          ordem[b.caixa_id as keyof typeof ordem]
+        );
+      });
 
       resultado.push({
         pedido_id: pedido.pedido_id,
-        caixas: caixasUsadas.sort((a, b) => {
-          if (!a.caixa_id && !b.caixa_id) return 0;
-          if (!a.caixa_id) return 1;
-          if (!b.caixa_id) return -1;
-          return b.caixa_id.localeCompare(a.caixa_id);
-        }),
+        caixas: caixasUsadas,
       });
     }
 
+    console.log('resultado', JSON.stringify(resultado, null, 2), 'x---x');
     return { pedidos: resultado };
   }
 
-  // Calcula volume da caixa
+  /**
+   * Retorna quantos produtos consecutivos (do começo do array `produtos`)
+   * podem ser alocados na caixa usando uma heurística "shelf" (linhas na base LxC),
+   * preservando ordem. Usa rotações e respeita altura.
+   */
+  private simulatePackCount(
+    caixa: Caixa,
+    produtos: {
+      produto_id: string;
+      dimensoes: { altura: number; largura: number; comprimento: number };
+    }[],
+  ): number {
+    const L = caixa.largura; // largura da base
+    const C = caixa.comprimento; // comprimento da base
+    const A = caixa.altura; // altura
+
+    let totalUsedLength = 0; // comprimento já usado (soma das alturas das prateleiras)
+    let currentRowRemainingWidth = L;
+    let currentRowHeight = 0;
+    let count = 0;
+
+    for (let i = 0; i < produtos.length; i++) {
+      const p = produtos[i];
+      // gera rotações que cabem em altura e também não excedem base em qualquer dimensão
+      const rotations = this.getRotations(p.dimensoes).filter(
+        (r) => r.altura <= A && r.largura <= L && r.comprimento <= C,
+      );
+
+      if (rotations.length === 0) {
+        break; // produto não cabe nem sozinho na caixa
+      }
+
+      // tenta colocar na linha atual (greedy: escolhe rotação com menor largura que caiba)
+      // ordenamos por largura crescente para tentar acomodar mais itens na linha
+      const rotSorted = rotations.slice().sort((a, b) => a.largura - b.largura);
+
+      let placed = false;
+      for (const r of rotSorted) {
+        // cabe na linha atual sem ultrapassar o comprimento total disponível
+        if (
+          r.largura <= currentRowRemainingWidth &&
+          r.comprimento <= C - totalUsedLength
+        ) {
+          currentRowRemainingWidth -= r.largura;
+          currentRowHeight = Math.max(currentRowHeight, r.comprimento);
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        // inicia nova linha (prateleira)
+        totalUsedLength += currentRowHeight;
+        if (totalUsedLength >= C) {
+          break; // não cabe nova linha
+        }
+
+        // escolher rotação que caiba na nova linha (largura <= L e comprimento <= comprimento_restante)
+        const comprimentoRestante = C - totalUsedLength;
+        const candidatesNewRow = rotSorted.filter(
+          (r) => r.largura <= L && r.comprimento <= comprimentoRestante,
+        );
+        if (candidatesNewRow.length === 0) {
+          break; // não há rotação que caiba na nova linha
+        }
+        const chosen = candidatesNewRow[0]; // menor largura
+        currentRowRemainingWidth = L - chosen.largura;
+        currentRowHeight = chosen.comprimento;
+        placed = true;
+      }
+
+      if (!placed) break;
+
+      count++;
+    }
+
+    return count;
+  }
+
+  /** Gera as 6 rotações (altura, largura, comprimento) */
+  private getRotations(d: {
+    altura: number;
+    largura: number;
+    comprimento: number;
+  }): { altura: number; largura: number; comprimento: number }[] {
+    const { altura: a, largura: l, comprimento: c } = d;
+    return [
+      { altura: a, largura: l, comprimento: c },
+      { altura: a, largura: c, comprimento: l },
+      { altura: l, largura: a, comprimento: c },
+      { altura: l, largura: c, comprimento: a },
+      { altura: c, largura: a, comprimento: l },
+      { altura: c, largura: l, comprimento: a },
+    ];
+  }
+
   private volume(caixa: {
     altura: number;
     largura: number;
@@ -117,15 +228,22 @@ export class PackingService {
     return caixa.altura * caixa.largura * caixa.comprimento;
   }
 
-  // Verifica se produto cabe na caixa (dimensões individuais)
   private cabeNaCaixa(
     caixa: { altura: number; largura: number; comprimento: number },
-    dimensoes: { altura: number; largura: number; comprimento: number },
-  ) {
-    return (
-      dimensoes.altura <= caixa.altura &&
-      dimensoes.largura <= caixa.largura &&
-      dimensoes.comprimento <= caixa.comprimento
-    );
+    p: { altura: number; largura: number; comprimento: number },
+  ): boolean {
+    const { altura: A, largura: L, comprimento: C } = caixa;
+    const { altura: a, largura: l, comprimento: c } = p;
+
+    const rotacoes = [
+      [a, l, c],
+      [a, c, l],
+      [l, a, c],
+      [l, c, a],
+      [c, a, l],
+      [c, l, a],
+    ];
+
+    return rotacoes.some(([ra, rl, rc]) => ra <= A && rl <= L && rc <= C);
   }
 }

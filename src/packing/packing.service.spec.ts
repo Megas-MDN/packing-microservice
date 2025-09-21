@@ -26,7 +26,7 @@ describe('PackingService', () => {
     const saidaEsperada = JSON.parse(fs.readFileSync(saidaPath, 'utf-8'));
 
     const resultado = service.processarPedidos(entradaJSON);
-    console.log('resultado', JSON.stringify(resultado, null, 2));
+
     expect(resultado).toEqual(saidaEsperada);
   });
 });
