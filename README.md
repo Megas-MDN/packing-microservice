@@ -1,6 +1,6 @@
 # 📦 L2 Code - Packing API
 
-🔗 **API Online:** [https://\_\_\_.com](https://___.com)
+🔗 **API Online:** [https://packing-microservice.vercel.app/](https://packing-microservice.vercel.app/)
 
 Aplicação desenvolvida em **Node.js com NestJS** para auxiliar no processo de empacotamento de pedidos de uma loja online.  
 A API recebe pedidos com produtos e suas dimensões e retorna a distribuição otimizada em caixas de papelão disponíveis.
