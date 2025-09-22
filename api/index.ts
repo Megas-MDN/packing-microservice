@@ -14,7 +14,6 @@ async function bootstrap() {
 
     // Configurações do seu app
     app.enableCors();
-    app.setGlobalPrefix('api'); // Opcional
 
     await app.init();
     nestApp = app;
